@@ -1,0 +1,600 @@
+// Prisma Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessions                Session[]
+  auditLogs               AuditLog[]
+  passwordResets          PasswordReset[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference?
+  payments                Payment[]
+  subscriptions           Subscription[]
+  dataExportRequests      DataExportRequest[]
+  dataDeletionRequests    DataDeletionRequest[]
+  consentRecords          ConsentRecord[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// Session model (for refresh tokens)
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Password Reset model
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_resets")
+}
+
+// Audit Log model (track all important actions)
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String // e.g., "USER_LOGIN", "USER_CREATED", "PASSWORD_CHANGED"
+  resource   String? // e.g., "users", "payments"
+  resourceId String? // ID of affected resource
+  details    Json? // Additional details
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Role enum
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+// Notification enums
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+// Notification model
+model Notification {
+  id        String              @id @default(uuid())
+  userId    String
+  type      NotificationType    @default(INFO)
+  channel   NotificationChannel @default(IN_APP)
+  status    NotificationStatus  @default(PENDING)
+  title     String
+  message   String
+  data      Json?
+  readAt    DateTime?
+  sentAt    DateTime?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, createdAt])
+  @@map("notifications")
+}
+
+// Notification Preference model
+model NotificationPreference {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  emailEnabled Boolean  @default(true)
+  inAppEnabled Boolean  @default(true)
+  smsEnabled   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// Payment Gateway Models
+
+// Payment enums
+enum PaymentProvider {
+  STRIPE
+  RAZORPAY
+  CASHFREE
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  UPI
+  NETBANKING
+  WALLET
+  EMI
+}
+
+enum Currency {
+  USD
+  INR
+  EUR
+  GBP
+}
+
+// Payment model - unified payment records
+model Payment {
+  id                String          @id @default(uuid())
+  userId            String
+  provider          PaymentProvider
+  providerPaymentId String?         @unique // External payment ID from provider
+  amount            Decimal         @db.Decimal(10, 2)
+  currency          Currency        @default(USD)
+  status            PaymentStatus   @default(PENDING)
+  paymentMethod     PaymentMethod?
+  description       String?
+  metadata          Json? // Additional provider-specific data
+  errorMessage      String?
+  errorCode         String?
+  refundedAmount    Decimal?        @db.Decimal(10, 2)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  capturedAt        DateTime?
+  refundedAt        DateTime?
+
+  // Relations
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refunds     PaymentRefund[]
+  webhookLogs PaymentWebhookLog[]
+
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+  @@index([providerPaymentId])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+// Payment Refund model
+model PaymentRefund {
+  id               String        @id @default(uuid())
+  paymentId        String
+  providerRefundId String?       @unique
+  amount           Decimal       @db.Decimal(10, 2)
+  reason           String?
+  status           PaymentStatus @default(PENDING)
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  processedAt      DateTime?
+
+  // Relations
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([status])
+  @@map("payment_refunds")
+}
+
+// Webhook Log model - track all webhook events
+model PaymentWebhookLog {
+  id           String          @id @default(uuid())
+  paymentId    String?
+  provider     PaymentProvider
+  eventType    String
+  eventId      String?         @unique
+  payload      Json
+  signature    String?
+  verified     Boolean         @default(false)
+  processed    Boolean         @default(false)
+  errorMessage String?
+  createdAt    DateTime        @default(now())
+  processedAt  DateTime?
+
+  // Relations
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([provider])
+  @@index([eventType])
+  @@index([processed])
+  @@index([createdAt])
+  @@map("payment_webhook_logs")
+}
+
+// Subscription model - for recurring payments
+model Subscription {
+  id                 String             @id @default(uuid())
+  userId             String
+  provider           PaymentProvider
+  providerSubId      String?            @unique
+  planId             String
+  planName           String
+  amount             Decimal            @db.Decimal(10, 2)
+  currency           Currency           @default(USD)
+  status             SubscriptionStatus @default(ACTIVE)
+  billingCycle       BillingCycle       @default(MONTHLY)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  cancelledAt        DateTime?
+  metadata           Json?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+  @@index([providerSubId])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum BillingCycle {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+// GDPR Compliance Models
+
+// Data Export Request model
+model DataExportRequest {
+  id           String           @id @default(uuid())
+  userId       String
+  status       DataExportStatus @default(PENDING)
+  requestedAt  DateTime         @default(now())
+  completedAt  DateTime?
+  expiresAt    DateTime? // Export link expiry
+  downloadUrl  String?
+  fileSize     Int? // In bytes
+  errorMessage String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@map("data_export_requests")
+}
+
+enum DataExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+// Data Deletion Request model
+model DataDeletionRequest {
+  id                String             @id @default(uuid())
+  userId            String
+  status            DataDeletionStatus @default(PENDING)
+  deletionType      DeletionType       @default(SOFT)
+  requestedAt       DateTime           @default(now())
+  scheduledFor      DateTime? // Scheduled deletion date
+  completedAt       DateTime?
+  reason            String?
+  confirmedAt       DateTime? // User confirmation timestamp
+  confirmationToken String?            @unique
+  errorMessage      String? // Error details if failed
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("data_deletion_requests")
+}
+
+enum DataDeletionStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum DeletionType {
+  SOFT // Mark as deleted, keep data
+  HARD // Permanently delete data
+}
+
+// Consent Record model
+model ConsentRecord {
+  id          String      @id @default(uuid())
+  userId      String
+  consentType ConsentType
+  granted     Boolean     @default(false)
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+  version     String? // Consent version (for tracking changes)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, consentType])
+  @@index([userId])
+  @@index([consentType])
+  @@map("consent_records")
+}
+
+enum ConsentType {
+  MARKETING_EMAILS
+  ANALYTICS
+  THIRD_PARTY_SHARING
+  COOKIES
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+}
+
+// Content Management Models for Landing Page/Funnel
+
+// Training Category enum
+enum TrainingCategory {
+  INTRODUCTORY
+  NICHE_TOPICS
+  TOOL_BASED
+  CODE_ALONG
+  APPS
+  UTILITIES
+  SAAS_SCAFFOLDING
+}
+
+// Training Level enum
+enum TrainingLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// Training model - Content that redirects to external platforms
+model Training {
+  id          String           @id @default(uuid())
+  title       String
+  description String           @db.Text
+  category    TrainingCategory
+  level       TrainingLevel
+  externalLink String          // URL to redirect (YouTube, course platform, etc.)
+  duration    Int?             // Duration in minutes
+  price       Decimal?         @db.Decimal(10, 2) // Display price (if applicable)
+  image       String?          // Image URL
+  featured    Boolean          @default(false)
+  isActive    Boolean          @default(true)
+  displayOrder Int             @default(0) // For ordering on frontend
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([isActive])
+  @@index([featured, isActive])
+  @@index([category])
+  @@index([displayOrder])
+  @@map("trainings")
+}
+
+// Tool model - Tools walkthrough content
+model Tool {
+  id                String   @id @default(uuid())
+  title             String
+  description       String   @db.Text
+  problemSolved     String   @db.Text
+  whoShouldUse      String?  @db.Text
+  externalLink      String   // URL to tool or tutorial
+  image             String?  // Image URL
+  relatedTrainingIds String[] // Array of training IDs
+  featured          Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  displayOrder      Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([featured, isActive])
+  @@index([displayOrder])
+  @@map("tools")
+}
+
+// Product Status enum
+enum ProductStatus {
+  LIVE
+  BETA
+  COMING_SOON
+}
+
+// Product model - SaaS products showcase
+model Product {
+  id          String        @id @default(uuid())
+  title       String
+  description String        @db.Text
+  problemSolved String      @db.Text
+  status      ProductStatus
+  externalLink String       // URL to product website
+  pricing     String?       // Display pricing info
+  image       String?       // Image URL
+  featured    Boolean       @default(false)
+  isActive    Boolean       @default(true)
+  displayOrder Int          @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([isActive])
+  @@index([featured, isActive])
+  @@index([status])
+  @@index([displayOrder])
+  @@map("products")
+}
+
+// Knowledge Category enum
+enum KnowledgeCategory {
+  GLOSSARY
+  CORE_CONCEPTS
+  BEST_PRACTICES
+  CASE_STUDIES
+  SAAS_SCAFFOLDING
+}
+
+// Knowledge Article model - Knowledge hub content
+model KnowledgeArticle {
+  id          String            @id @default(uuid())
+  title       String
+  description String            @db.Text
+  content     String            @db.Text // Markdown content
+  category    KnowledgeCategory
+  readTime    Int?              // Read time in minutes
+  image       String?           // Image URL
+  externalLink String?          // Optional: if hosted elsewhere
+  featured    Boolean           @default(false)
+  isActive    Boolean           @default(true)
+  displayOrder Int              @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([isActive])
+  @@index([featured, isActive])
+  @@index([category])
+  @@index([displayOrder])
+  @@map("knowledge_articles")
+}
+
+// Community Platform enum
+enum CommunityPlatform {
+  SKOOL
+  SLACK
+  DISCORD
+  OTHER
+}
+
+// Community Link model - Community access links
+model CommunityLink {
+  id          String            @id @default(uuid())
+  platform    CommunityPlatform
+  title       String
+  description String?           @db.Text
+  externalLink String           // Join link
+  image       String?           // Image URL
+  isActive    Boolean           @default(true)
+  displayOrder Int              @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([isActive])
+  @@index([platform])
+  @@index([displayOrder])
+  @@map("community_links")
+}
+
+// Contact Submission model
+model ContactSubmission {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("PENDING") // PENDING, READ, REPLIED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_submissions")
+}
+
+// Newsletter Subscription model
+model NewsletterSubscription {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([isActive])
+  @@index([email])
+  @@map("newsletter_subscriptions")
+}

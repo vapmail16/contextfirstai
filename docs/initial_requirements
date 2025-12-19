@@ -1,0 +1,497 @@
+Please look at the documents which are there in the project folder in the docs folder. So basically initial requirements is where I have the requirements and then second is the guidelines document, checklist document, issue log, and deployment issue log. These are all the lessons learned. These are all the documents which we need to consider while creating this application. First and most important thing is we need to create this application using EDD which is test driven development. So write in your guidelines, make sure that you follow this approach every time you build or create. Second thing is if you go up the root level, you will see two folders. One is standards and one is template. In standards folder, there's another folder called frontend. You can check the actual name. So I want the frontend like that. And secondly, if you go to template, you will see a backend template created which has authentication, SMTP, payment gateway, and GDPR. I want that entire template to be copied, a database to be created, and then the migration should happen from that to the new application level database. And then run the test cases to confirm whether the backend and frontend are able to build, and then we can build the actual functional which are in their initial requirements document.
+
+
+
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+Product Name (Working)
+
+AI Forge Hub
+(Name can be changed later – PRD remains valid)
+
+1. Purpose & Scope
+Purpose
+
+Build a single website that showcases and delivers:
+
+AI trainings
+
+Practical guides & information
+
+Tools walkthroughs
+
+Community access (via Skool / Slack)
+
+SaaS products
+
+Enterprise & internship offerings
+
+The website acts as:
+
+Discovery layer
+
+Trust layer
+
+Conversion layer
+
+Traffic router to Skool, products, and services
+
+2. Target Users
+Primary Users
+
+Students & early professionals
+
+Developers & builders
+
+Career switchers
+
+Indie hackers
+
+SME owners
+
+Secondary Users
+
+Schools / Universities (B2B)
+
+Training partners
+
+Community centres
+
+Enterprises
+
+3. User Goals
+User Type	Goal
+Learner	Understand AI clearly & practically
+Builder	Learn tools & build real things
+Student	Get exposure + internship
+SME	Find AI help & tools
+Enterprise	Evaluate training or solutions
+4. Core Features (High Level)
+
+Training catalogue
+
+Knowledge & information hub
+
+Tools walkthrough section
+
+Community access integration
+
+Products (SaaS) showcase
+
+Internship & enterprise pages
+
+Marketing & lead capture
+
+Admin content management
+
+5. Information Architecture (Site Map)
+Public Pages
+
+Home
+
+What We Offer
+
+Training
+
+Knowledge Hub
+
+Tools
+
+Products
+
+Community
+
+Internships
+
+Enterprise
+
+Blog / Articles
+
+Contact
+
+6. Functional Requirements (Detailed)
+6.1 Home Page
+
+Objective: Explain what this platform is in 10 seconds.
+
+Components
+
+Hero section (What + Who + CTA)
+
+Pillars overview:
+
+Training
+
+Knowledge
+
+Tools
+
+Products
+
+Community
+
+Featured trainings
+
+Featured tools
+
+CTA to join community (Skool)
+
+Newsletter signup
+
+6.2 Training Page
+
+Objective: List and explain all trainings clearly.
+
+Training Categories
+
+Introductory
+
+2-hour AI opening sessions
+
+Niche Topics
+
+Libraries
+
+Open-source packages
+
+Hardcore AI concepts
+
+Tool-Based
+
+Cursor
+
+Lovable
+
+N8N
+
+HeyGen
+
+Code-Along
+
+Apps
+
+Utilities
+
+SaaS scaffolding
+
+Features
+
+Training cards
+
+Duration
+
+Level (Beginner / Intermediate / Advanced)
+
+Mode (Live / Recorded)
+
+Price (if applicable)
+
+CTA: Register / Join Community
+
+6.3 Knowledge Hub (Information)
+
+Objective: Free, structured learning & authority building.
+
+Sections
+
+AI Glossary
+
+Core Concepts
+
+Transformers
+
+Vector databases
+
+Semantic search (math-level explanations)
+
+Best practices
+
+SaaS scaffolding
+
+Auth
+
+Payment gateways
+
+Docker
+
+GitHub
+
+Case studies
+
+Features
+
+Categorised articles
+
+Search & filter
+
+Read time
+
+Cross-linking to trainings/tools
+
+6.4 Tools Walkthrough Page
+
+Objective: Teach how to use AI tools practically.
+
+Tools Covered
+
+Cursor
+
+Claude
+
+Lovable
+
+N8N
+
+HeyGen
+
+Others (expandable)
+
+Each Tool Page Includes
+
+What problem it solves
+
+Who should use it
+
+Step-by-step walkthrough
+
+Example use cases
+
+Related training links
+
+6.5 Products Page (SaaS)
+
+Objective: Showcase current & upcoming products.
+
+Product Cards
+
+Product name
+
+Problem solved
+
+Status (Live / Beta / Coming Soon)
+
+Pricing (if live)
+
+CTA: Try / Join waitlist
+
+Initial Products
+
+PDF parser
+
+RAG toolkit
+
+Proposal generator
+
+Small utilities (TBD)
+
+6.6 Community Page
+
+Objective: Convert visitors into community members.
+
+Community Platform
+
+Skool (primary)
+
+Slack (initial / optional)
+
+Content
+
+What members get
+
+Learning paths
+
+Weekly sessions
+
+Challenges
+
+Internship access
+
+Products early access
+
+CTA
+
+Join Free Community
+
+Upgrade later (handled in Skool)
+
+6.7 Internship Page
+
+Objective: Attract learners who want experience.
+
+Information
+
+Internship structure
+
+Duration (4–8 weeks)
+
+What they will build
+
+Output expectations
+
+Portfolio benefits
+
+CTA
+
+Apply / Join Community
+
+6.8 Enterprise Page
+
+Objective: Capture B2B leads.
+
+Services
+
+AI training
+
+AI automation
+
+RAG assistants
+
+Internal tools
+
+Features
+
+Case types
+
+Engagement models
+
+Pricing ranges
+
+Contact form
+
+6.9 Blog / Articles
+
+Objective: SEO + authority.
+
+Medium integration or native blog
+
+Categories:
+
+Training
+
+Tools
+
+AI concepts
+
+Case studies
+
+6.10 Contact & Lead Capture
+
+Contact form
+
+Newsletter signup
+
+Calendly / booking link (optional)
+
+7. Non-Functional Requirements
+
+Mobile responsive
+
+Fast load time
+
+SEO-friendly
+
+Easy to update content
+
+Scalable structure
+
+8. Admin Requirements
+
+Add/edit trainings
+
+Add/edit articles
+
+Add/edit tools
+
+Add/edit products
+
+Manage CTAs & links
+
+No-code or low-code CMS preferred
+
+9. Integrations
+
+Skool (community)
+
+Slack (optional)
+
+Newsletter tool
+
+Analytics (GA / PostHog)
+
+Calendly
+
+Payment gateway (future)
+
+10. Success Metrics
+
+Website traffic
+
+Community signups
+
+Newsletter signups
+
+Training registrations
+
+Enterprise inquiries
+
+11. Phase-wise Delivery
+Phase 1 (MVP)
+
+Home
+
+Training
+
+Knowledge Hub
+
+Tools
+
+Community
+
+Contact
+
+Phase 2
+
+Products
+
+Internship
+
+Enterprise
+
+Blog expansion
+
+Phase 3
+
+User accounts
+
+Paid access
+
+Dashboard (optional)
+
+12. Out of Scope (For Now)
+
+Full LMS
+
+Payments inside website
+
+Complex user profiles
+
+Mobile app (future)
+
+Final Note (Important)
+
+This website is:
+
+NOT a platform
+
+NOT a course marketplace
+
+NOT a SaaS product
+
+It is a clear, structured AI knowledge + offering portal that routes users to:
+
+Training
+
+Community
+
+Products
+
+Enterprise services

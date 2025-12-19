@@ -1,0 +1,1 @@
+{"version":3,"file":"contactService.d.ts","sourceRoot":"","sources":["../../src/services/contactService.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAOH,qBAAa,cAAc;WACZ,iBAAiB,CAAC,IAAI,EAAE;QACnC,IAAI,EAAE,MAAM,CAAC;QACb,KAAK,EAAE,MAAM,CAAC;QACd,OAAO,EAAE,MAAM,CAAC;QAChB,OAAO,EAAE,MAAM,CAAC;KACjB;;;;;;;;;;CAyCF"}
