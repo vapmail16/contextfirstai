@@ -691,6 +691,175 @@ useEffect(() => {
 
 ---
 
+## Issue #6: Access Denied - New Users Have USER Role But Admin Routes Require ADMIN
+
+**Date**: December 19, 2025  
+**Category**: Frontend / Backend / Authorization / RBAC  
+**Severity**: High  
+**Status**: ⚠️ Requires Manual Fix (Database Update)
+
+### Description
+After successful registration and login, users see "Access Denied" when trying to access the admin panel (`/admin`). The error message shows "You don't have permission to access this page." This happens because newly registered users get the `USER` role by default, but admin routes require `ADMIN` or `SUPER_ADMIN` role.
+
+### What Went Wrong
+
+**Problem**:
+- User successfully registers and logs in
+- User tries to access `/admin` route
+- `ProtectedRoute` component checks user role
+- User has `USER` role, but route requires `ADMIN` role
+- User sees "Access Denied" message
+- Cannot access admin panel to manage content
+
+**What Was Missing**:
+- No automatic promotion of first user to ADMIN
+- No way to promote users to ADMIN from the UI (requires SUPER_ADMIN)
+- No documentation on how to create the first admin user
+- Admin routes are protected but no admin users exist
+
+**Current State** (Before Fix):
+```typescript
+// Prisma schema - default role is USER
+role      Role     @default(USER)
+
+// ProtectedRoute - requires ADMIN role
+<ProtectedRoute requiredRole="ADMIN">
+  // Admin routes
+</ProtectedRoute>
+
+// Result: USER role cannot access ADMIN routes
+```
+
+**Root Cause**:
+The Prisma schema sets the default role to `USER` for all new registrations. The admin routes are protected with `requiredRole="ADMIN"`, but there's no mechanism to automatically promote the first user or any user to ADMIN role. Only `SUPER_ADMIN` users can promote others to ADMIN, creating a chicken-and-egg problem.
+
+### Solution Required
+
+**Option 1: Promote First User to ADMIN via Database (Recommended for Initial Setup)**
+
+1. **Connect to Database**:
+   ```bash
+   # Using psql or database client
+   # Connection string: postgresql://yRNDQm:TEdbSyb49Q@database-whbqewat8i.tcp-proxy-2212.dcdeploy.cloud:30523/database-db
+   ```
+
+2. **Find Your User ID**:
+   ```sql
+   SELECT id, email, role FROM users WHERE email = 'your-email@example.com';
+   ```
+
+3. **Update User Role to ADMIN**:
+   ```sql
+   UPDATE users SET role = 'ADMIN' WHERE email = 'your-email@example.com';
+   ```
+
+4. **Verify**:
+   ```sql
+   SELECT id, email, role FROM users WHERE email = 'your-email@example.com';
+   -- Should show role = 'ADMIN'
+   ```
+
+5. **Logout and Login Again**:
+   - The frontend caches user data, so logout and login again to refresh the role
+   - After login, you should be able to access `/admin`
+
+**Option 2: Create SUPER_ADMIN User via Database (For Multiple Admins)**
+
+1. **Create SUPER_ADMIN User**:
+   ```sql
+   -- First, get the hashed password (you'll need to hash it using bcrypt)
+   -- Or update existing user to SUPER_ADMIN
+   UPDATE users SET role = 'SUPER_ADMIN' WHERE email = 'your-email@example.com';
+   ```
+
+2. **Use RBAC API to Promote Others**:
+   - SUPER_ADMIN can use `/api/rbac/users/:userId/role` to promote others to ADMIN
+
+**Option 3: Add First User Auto-Promotion (Future Enhancement)**
+
+Add logic to automatically promote the first registered user to ADMIN:
+```typescript
+// In authService.register()
+const userCount = await prisma.user.count();
+if (userCount === 1) {
+  // First user becomes ADMIN
+  role = 'ADMIN';
+}
+```
+
+### Prevention Strategies
+
+1. ✅ **Document First Admin Setup**:
+   - Add instructions to deployment guide
+   - Include SQL commands to promote first user
+   - Document RBAC role hierarchy
+
+2. ✅ **Auto-Promote First User** (Future):
+   - Automatically promote first registered user to ADMIN
+   - Or provide a setup wizard for first admin
+
+3. ✅ **Admin Setup Script**:
+   - Create a script to set up first admin user
+   - Include in deployment documentation
+
+4. ✅ **Better Error Messages**:
+   - Show more helpful message when access is denied
+   - Suggest contacting admin or checking role
+
+5. ✅ **Role Management UI** (Future):
+   - Add UI for SUPER_ADMIN to manage user roles
+   - Allow promoting users to ADMIN from admin panel
+
+### Related Files
+- `backend/prisma/schema.prisma` - User model with default USER role
+- `frontend/src/components/ProtectedRoute.tsx` - Role-based access control
+- `frontend/src/App.tsx` - Admin routes with requiredRole="ADMIN"
+- `backend/src/services/rbacService.ts` - Role management service
+- `backend/src/routes/rbac.ts` - RBAC API endpoints
+- `docs/POST_DEPLOYMENT_ISSUES.md` - This file
+
+### SQL Commands for Quick Fix
+
+**Promote Your User to ADMIN**:
+```sql
+-- Replace 'your-email@example.com' with your actual email
+UPDATE users 
+SET role = 'ADMIN' 
+WHERE email = 'your-email@example.com';
+
+-- Verify
+SELECT id, email, role, "createdAt" 
+FROM users 
+WHERE email = 'your-email@example.com';
+```
+
+**Create SUPER_ADMIN** (if needed):
+```sql
+UPDATE users 
+SET role = 'SUPER_ADMIN' 
+WHERE email = 'your-email@example.com';
+```
+
+### Time Lost
+- **User confusion**: Cannot access admin panel after registration
+- **Debugging**: ~10 minutes to identify role issue
+- **Fixing issue**: ~5 minutes (database update + logout/login)
+- **Total wasted time**: ~15 minutes + user frustration
+
+### Recurrence Risk
+- **Before**: High (will happen for every new user)
+- **After**: Low (once first admin is created, can promote others)
+
+### Key Learnings
+
+1. **Default roles matter** - New users need appropriate default roles or promotion mechanism
+2. **First user setup** - Need a way to create the first admin user
+3. **Documentation** - Include role setup in deployment guide
+4. **Auto-promotion** - Consider auto-promoting first user to ADMIN
+5. **RBAC hierarchy** - Understand role requirements before deployment
+
+---
+
 **Last Updated**: December 19, 2025  
 **Maintained By**: Development Team
 
