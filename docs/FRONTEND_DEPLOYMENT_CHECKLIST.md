@@ -28,19 +28,28 @@
 
 **Note**: Dockerfile uses `node:20-alpine` to match package requirements (Vite 7.3.0, Vitest 4.0.16 require Node 20+)
 
-### Environment Variables (Set in DCDeploy Dashboard)
+### Build Arguments (Set in DCDeploy Dashboard)
 
-**IMPORTANT**: Only include essential variables. Vite requires `VITE_` prefix.
+**CRITICAL**: Vite requires environment variables at **build time**, not runtime. These must be set as **build arguments** in DCDeploy.
 
-```env
-# Backend API URL (REQUIRED - from DCDeploy backend deployment)
+```bash
+# Build Argument (REQUIRED - from DCDeploy backend deployment)
 VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
 ```
 
+**DCDeploy Configuration**:
+1. Go to frontend service settings
+2. Navigate to **Build Arguments** (not Environment Variables)
+3. Add build argument:
+   - **Key**: `VITE_API_URL`
+   - **Value**: `https://backend-whbqewat8i.dcdeploy.cloud/api`
+
 **Note**: 
 - Vite environment variables must be prefixed with `VITE_`
-- These variables are embedded at build time (not runtime)
-- After changing `VITE_API_URL`, you must rebuild the frontend
+- These variables are embedded at **build time** (not runtime)
+- Dockerfile accepts `VITE_API_URL` as build argument (`ARG VITE_API_URL`)
+- After changing `VITE_API_URL`, you must **rebuild** the frontend
+- Setting as runtime environment variable will NOT work (Issue #3)
 
 ---
 

@@ -298,6 +298,135 @@ After adding the login button, it was discovered that the register/signup featur
 
 ---
 
+## Issue #3: Frontend Using localhost Instead of Deployed Backend URL
+
+**Date**: December 19, 2025  
+**Category**: Frontend / Configuration / Environment Variables  
+**Severity**: Critical  
+**Status**: ✅ Resolved
+
+### Description
+After deploying the frontend, the register feature (and all API calls) are failing with `net::ERR_CONNECTION_REFUSED` errors. The frontend is attempting to connect to `localhost:3001/api` instead of the deployed backend URL (`https://backend-whbqewat8i.dcdeploy.cloud/api`).
+
+### What Went Wrong
+
+**Problem**:
+- Frontend deployed successfully to DCDeploy
+- Register page loads correctly
+- All API calls fail with connection refused errors
+- Console shows: `Failed to load resource: net::ERR_CONNECTION_REFUSED localhost:3001/api/auth/register`
+- Frontend is using `localhost:3001` instead of deployed backend URL
+
+**What Was Missing**:
+- Dockerfile doesn't accept `VITE_API_URL` as a build argument
+- Vite environment variables are embedded at **build time**, not runtime
+- DCDeploy environment variables are set at runtime, but Vite needs them at build time
+- No mechanism to pass `VITE_API_URL` during Docker build
+
+**Current State** (Before Fix):
+```dockerfile
+# Dockerfile - No build argument for VITE_API_URL
+FROM node:20-alpine AS builder
+# ... install dependencies ...
+RUN npm run build  # Uses default localhost:3001
+```
+
+**Root Cause**:
+Vite embeds environment variables into the JavaScript bundle at build time. Setting `VITE_API_URL` as a runtime environment variable in DCDeploy doesn't work because the code is already compiled with the default value (`http://localhost:3001/api`).
+
+### Root Causes
+
+1. **Build-Time vs Runtime**: Vite requires environment variables at build time, not runtime
+2. **Missing Build Argument**: Dockerfile didn't accept `VITE_API_URL` as a build argument
+3. **Documentation Gap**: Documentation mentioned setting env vars in DCDeploy but didn't specify they need to be build arguments
+4. **Default Fallback**: Code uses `localhost:3001` as default, which gets embedded in production build
+
+### Solution Implemented
+
+**1. Updated Dockerfile to Accept Build Argument** (`frontend/Dockerfile`):
+```dockerfile
+# Accept build argument for API URL
+# Vite requires environment variables at build time (not runtime)
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# ... rest of build process ...
+RUN npm run build  # Now uses VITE_API_URL from build argument
+```
+
+**2. DCDeploy Configuration**:
+- Set `VITE_API_URL` as a **build argument** (not just environment variable)
+- Value: `https://backend-whbqewat8i.dcdeploy.cloud/api`
+- DCDeploy should pass this as `--build-arg VITE_API_URL=...` during build
+
+**3. Documentation Updated**:
+- Updated deployment documentation to clarify build arguments vs runtime env vars
+- Added note that Vite requires build-time variables
+
+### Prevention Strategies
+
+1. ✅ **Understand Build-Time vs Runtime**:
+   - Vite embeds env vars at build time
+   - Docker build arguments are needed, not runtime env vars
+   - Always check framework requirements for env var timing
+
+2. ✅ **Dockerfile Best Practices**:
+   - Accept build arguments for build-time variables
+   - Use `ARG` and `ENV` together for Vite variables
+   - Document which variables are build-time vs runtime
+
+3. ✅ **Documentation**:
+   - Clearly distinguish build-time vs runtime variables
+   - Provide DCDeploy-specific instructions
+   - Include examples of build argument syntax
+
+4. ✅ **Testing**:
+   - Test Docker build with build arguments locally
+   - Verify built bundle contains correct API URL
+   - Check browser console for API calls after deployment
+
+5. ✅ **Default Values**:
+   - Avoid hardcoding localhost in production code
+   - Use environment-specific defaults
+   - Fail fast if required env vars are missing
+
+### Related Files
+- `frontend/Dockerfile` - Updated to accept `VITE_API_URL` as build argument
+- `frontend/src/services/api/authService.ts` - Uses `import.meta.env.VITE_API_URL`
+- `docs/DEPLOYMENT.md` - Deployment guide (needs update)
+- `docs/FRONTEND_DEPLOYMENT_CHECKLIST.md` - Checklist (needs update)
+- `docs/POST_DEPLOYMENT_ISSUES.md` - This file
+
+### DCDeploy Configuration Required
+
+**Build Arguments** (not just Environment Variables):
+```bash
+--build-arg VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
+```
+
+**Note**: DCDeploy may need to be configured to pass build arguments. Check DCDeploy documentation for how to set build arguments vs runtime environment variables.
+
+### Time Lost
+- **User confusion**: Register feature not working
+- **Debugging**: ~15 minutes to identify issue
+- **Fixing issue**: ~10 minutes (Dockerfile update + documentation)
+- **Rebuild required**: Frontend must be rebuilt with correct build argument
+- **Total wasted time**: ~25 minutes + user frustration
+
+### Recurrence Risk
+- **Before**: High (common mistake with Vite/build-time variables)
+- **After**: Low (Dockerfile now accepts build argument, documentation updated)
+
+### Key Learnings
+
+1. **Vite requires build-time variables** - Not runtime environment variables
+2. **Docker build arguments** - Use `ARG` and `ENV` for build-time variables
+3. **Test locally first** - Build Docker image with build args to verify
+4. **Document clearly** - Distinguish build-time vs runtime variables
+5. **DCDeploy configuration** - Ensure build arguments are set, not just env vars
+
+---
+
 **Last Updated**: December 19, 2025  
 **Maintained By**: Development Team
 

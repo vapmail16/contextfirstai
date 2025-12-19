@@ -8,6 +8,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Accept build argument for API URL
+# Vite requires environment variables at build time (not runtime)
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copy package files first for better caching
 COPY package.json ./
 COPY package-lock.json* ./

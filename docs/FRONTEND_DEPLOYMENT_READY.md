@@ -47,16 +47,19 @@ The frontend has been prepared for deployment to DCDeploy, following the same su
 
 ### Required for Deployment
 
-**DCDeploy Environment Variables**:
-```env
+**DCDeploy Build Arguments** (CRITICAL - Must be build arguments, not runtime env vars):
+```bash
 VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
 ```
 
 **Important Notes**:
 - Vite requires `VITE_` prefix for environment variables
 - Variables are embedded at **build time** (not runtime)
+- Dockerfile accepts `VITE_API_URL` as build argument (`ARG VITE_API_URL`)
+- Must be set as **build argument** in DCDeploy, not runtime environment variable
 - After changing `VITE_API_URL`, you must **rebuild** the frontend
 - Backend URL: `https://backend-whbqewat8i.dcdeploy.cloud` (from DCDeploy)
+- **Issue #3**: Setting as runtime env var will cause localhost connection errors
 
 ---
 

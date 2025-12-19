@@ -608,16 +608,25 @@ Before deploying the frontend, ensure:
    - Service Name: `contextfirstai-frontend`
    - Port: `3001`
 
-3. **Set Environment Variables**:
-   ```env
-   # Backend API URL (from DCDeploy backend deployment)
+3. **Set Build Arguments** (CRITICAL - Must be build arguments, not runtime env vars):
+   ```bash
+   # Build Argument (from DCDeploy backend deployment)
    VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
    ```
+   
+   In DCDeploy dashboard:
+   - Navigate to **Build Arguments** section (not Environment Variables)
+   - Add build argument:
+     - **Key**: `VITE_API_URL`
+     - **Value**: `https://backend-whbqewat8i.dcdeploy.cloud/api`
 
-   **Important**: 
+   **CRITICAL Notes**: 
    - Vite requires `VITE_` prefix for environment variables
-   - These variables are embedded at **build time** (not runtime)
+   - Variables are embedded at **build time** (not runtime)
+   - Must be set as **build argument** in DCDeploy, not runtime environment variable
+   - Dockerfile accepts `VITE_API_URL` as build argument (`ARG VITE_API_URL`)
    - After changing `VITE_API_URL`, you must **rebuild** the frontend
+   - **Issue #3**: Setting as runtime env var will cause localhost connection errors
 
 4. **Deploy**:
    - Click "Deploy" and monitor build logs
