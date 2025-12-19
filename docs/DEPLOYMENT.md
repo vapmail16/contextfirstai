@@ -610,8 +610,8 @@ Before deploying the frontend, ensure:
 
 3. **Set Environment Variables**:
    ```env
-   # Backend API URL (REQUIRED - update with actual backend URL)
-   VITE_API_URL=https://your-backend-url.dcdeploy.cloud/api
+   # Backend API URL (from DCDeploy backend deployment)
+   VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
    ```
 
    **Important**: 

@@ -31,8 +31,8 @@
 **IMPORTANT**: Only include essential variables. Vite requires `VITE_` prefix.
 
 ```env
-# Backend API URL (REQUIRED - update with actual backend URL after backend deployment)
-VITE_API_URL=https://your-backend-url.dcdeploy.cloud/api
+# Backend API URL (REQUIRED - from DCDeploy backend deployment)
+VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
 ```
 
 **Note**: 
@@ -44,10 +44,10 @@ VITE_API_URL=https://your-backend-url.dcdeploy.cloud/api
 
 ## Deployment Steps
 
-### 1. Get Backend URL
-After backend deployment, note the backend URL:
+### 1. Backend URL (Already Available)
+Backend URL from DCDeploy:
 ```
-https://backend-xxxxx.dcdeploy.cloud
+https://backend-whbqewat8i.dcdeploy.cloud
 ```
 
 ### 2. Set Environment Variable in DCDeploy
@@ -55,7 +55,7 @@ https://backend-xxxxx.dcdeploy.cloud
 2. Navigate to frontend service settings
 3. Add environment variable:
    - **Key**: `VITE_API_URL`
-   - **Value**: `https://your-backend-url.dcdeploy.cloud/api`
+   - **Value**: `https://backend-whbqewat8i.dcdeploy.cloud/api`
 
 ### 3. Deploy Frontend
 1. Connect repository: `https://github.com/vapmail16/contextfirstai.git`
@@ -68,11 +68,13 @@ https://backend-xxxxx.dcdeploy.cloud
 ### 4. Update Backend CORS (If Not Done)
 After frontend deployment, update backend CORS to allow frontend origin:
 
-**Backend Environment Variables**:
+**Backend Environment Variables** (update in DCDeploy backend service):
 ```env
 FRONTEND_URL=https://your-frontend-url.dcdeploy.cloud
 ALLOWED_ORIGINS=https://your-frontend-url.dcdeploy.cloud,http://localhost:8080
 ```
+
+**Note**: Replace `your-frontend-url.dcdeploy.cloud` with the actual frontend URL after frontend deployment.
 
 **Then redeploy backend** to apply CORS changes.
 

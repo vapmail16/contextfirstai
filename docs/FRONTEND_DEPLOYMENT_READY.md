@@ -48,14 +48,14 @@ The frontend has been prepared for deployment to DCDeploy, following the same su
 
 **DCDeploy Environment Variables**:
 ```env
-VITE_API_URL=https://your-backend-url.dcdeploy.cloud/api
+VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
 ```
 
 **Important Notes**:
 - Vite requires `VITE_` prefix for environment variables
 - Variables are embedded at **build time** (not runtime)
 - After changing `VITE_API_URL`, you must **rebuild** the frontend
-- Update with actual backend URL after backend deployment
+- Backend URL: `https://backend-whbqewat8i.dcdeploy.cloud` (from DCDeploy)
 
 ---
 
@@ -120,12 +120,13 @@ Visit: `http://localhost:3001`
 
 ## Deployment Steps
 
-1. **Get Backend URL**: After backend deployment, note the backend URL
-2. **Set Environment Variable**: Add `VITE_API_URL` in DCDeploy dashboard
+1. **Backend URL**: ✅ Available - `https://backend-whbqewat8i.dcdeploy.cloud`
+2. **Set Environment Variable**: Add `VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api` in DCDeploy dashboard
 3. **Deploy Frontend**: Connect repository and deploy
-4. **Update Backend CORS**: Add frontend URL to backend `ALLOWED_ORIGINS`
-5. **Redeploy Backend**: Apply CORS changes
-6. **Verify**: Test frontend and API connectivity
+4. **Get Frontend URL**: After frontend deployment, note the frontend URL
+5. **Update Backend CORS**: Add frontend URL to backend `ALLOWED_ORIGINS` in DCDeploy
+6. **Redeploy Backend**: Apply CORS changes
+7. **Verify**: Test frontend and API connectivity
 
 See `docs/FRONTEND_DEPLOYMENT_CHECKLIST.md` for detailed steps.
 
