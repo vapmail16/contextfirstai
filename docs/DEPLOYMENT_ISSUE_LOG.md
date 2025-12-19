@@ -12,6 +12,101 @@ This document logs all deployment issues encountered during the deployment of AI
 
 ---
 
+## Issue #5: JWT Secrets Not Updated - Using Weak/Placeholder Values
+
+**Date**: December 19, 2025  
+**Category**: Configuration / Security  
+**Severity**: High  
+**Status**: ✅ Resolved
+
+### Description
+The `.env` file was updated but JWT secrets were not regenerated with secure random values. The secrets were still using weak or placeholder values instead of cryptographically secure random strings.
+
+### What Went Wrong
+
+**Problem**:
+- JWT secrets were not updated when .env was cleaned up
+- Secrets might have been weak or predictable
+- No automatic generation of secure secrets
+- Security risk if weak secrets are used
+
+**What Was There**:
+```env
+JWT_SECRET=contextfirstai-jwt-secret-key-minimum-32-characters-long-for-production
+JWT_REFRESH_SECRET=contextfirstai-refresh-secret-key-minimum-32-characters-long-for-production
+```
+
+**What Should Be**:
+```env
+JWT_SECRET=<64-character-hex-string-from-crypto.randomBytes>
+JWT_REFRESH_SECRET=<64-character-hex-string-from-crypto.randomBytes>
+```
+
+### Root Causes
+
+1. **Not Regenerated**: When cleaning up .env, JWT secrets weren't regenerated
+2. **Weak Values**: Used predictable/weak values instead of cryptographically secure random
+3. **No Automation**: No automatic generation of secure secrets
+4. **Security Oversight**: Didn't verify secrets were actually secure
+
+### Solution Implemented
+
+**1. Generated Secure JWT Secrets**:
+```bash
+# Generate cryptographically secure random secrets
+node -e "const crypto = require('crypto'); console.log(crypto.randomBytes(32).toString('hex'));"
+```
+
+**2. Updated .env with Secure Secrets**:
+- Generated 64-character hex strings (32 bytes)
+- Cryptographically secure random values
+- Unique for each secret
+- Meets 32+ character requirement
+
+### Prevention Strategies
+
+1. ✅ **Always Generate Secure Secrets**:
+   - Use `crypto.randomBytes(32).toString('hex')` for JWT secrets
+   - Never use predictable or weak values
+   - Generate unique secrets for each environment
+
+2. ✅ **Automate Secret Generation**:
+   - Generate secrets automatically when creating .env
+   - Don't require manual secret generation
+   - Use secure random generation, not placeholders
+
+3. ✅ **Verify Secret Strength**:
+   - Check that secrets are 32+ characters
+   - Verify they're cryptographically secure
+   - Don't use dictionary words or predictable patterns
+
+4. ✅ **Update Secrets When Cleaning .env**:
+   - When updating .env file, regenerate secrets
+   - Don't keep old/weak secrets
+   - Always use fresh secure values
+
+### Related Files
+- `backend/.env` - Environment configuration (now with secure JWT secrets)
+- `docs/DEPLOYMENT_ISSUE_LOG.md` - This file
+
+### Time Lost
+- **Weak secrets in production**: Security risk
+- **Regenerating secrets**: ~1 minute
+- **Total wasted time**: ~1 minute + security risk
+
+### Recurrence Risk
+- **Before**: High (common to use weak/predictable secrets)
+- **After**: Low (will generate secure secrets automatically)
+
+### Key Learnings
+
+1. **Always generate secure secrets** - Use crypto.randomBytes, not predictable values
+2. **Automate secret generation** - Don't require manual intervention
+3. **Verify secret strength** - Check length and randomness
+4. **Update when cleaning .env** - Regenerate secrets when updating .env file
+
+---
+
 ## Issue #4: .env File Contains Placeholders Instead of Actual Values
 
 **Date**: December 19, 2025  
