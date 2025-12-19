@@ -40,7 +40,7 @@ const Home = () => {
       <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center space-y-6">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground">
-            AI Forge Hub
+            Context First AI
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
             Your gateway to AI training, practical guides, tools, and community.

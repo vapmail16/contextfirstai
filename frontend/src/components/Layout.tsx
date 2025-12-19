@@ -5,12 +5,15 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  const { user, logout, isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -19,7 +22,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="text-xl font-bold">
-              AI Forge Hub
+              Context First AI
             </Link>
 
             {/* Navigation */}
@@ -44,6 +47,38 @@ const Layout = ({ children }: LayoutProps) => {
               </Link>
             </nav>
 
+            {/* Auth Actions */}
+            <div className="hidden md:flex items-center gap-4">
+              {isAuthenticated && user ? (
+                <>
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">
+                      Admin
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={async () => {
+                      try {
+                        await logout();
+                      } catch (error) {
+                        console.error('Logout failed:', error);
+                      }
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Link to="/login">
+                  <Button variant="default" size="sm">
+                    Login
+                  </Button>
+                </Link>
+              )}
+            </div>
+
             {/* Mobile Menu Button */}
             <Button variant="ghost" size="sm" className="md:hidden">
               Menu
@@ -65,7 +100,7 @@ const Layout = ({ children }: LayoutProps) => {
             <div>
               <h3 className="font-semibold mb-4">About</h3>
               <p className="text-sm text-muted-foreground">
-                AI Forge Hub - Your gateway to AI training, tools, and community.
+                Context First AI - Your gateway to AI training, tools, and community.
               </p>
             </div>
 
@@ -123,7 +158,7 @@ const Layout = ({ children }: LayoutProps) => {
 
           {/* Copyright */}
           <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} AI Forge Hub. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Context First AI. All rights reserved.</p>
           </div>
         </div>
       </footer>

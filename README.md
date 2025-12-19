@@ -1,10 +1,10 @@
-# AI Forge Hub
+# Context First AI
 
 A comprehensive platform for AI training, knowledge sharing, tools walkthroughs, and community access. Built with modern web technologies and following Test-Driven Development (TDD) principles.
 
 ## 🎯 Purpose
 
-AI Forge Hub is a **landing page / marketing funnel with Admin CMS** that:
+Context First AI is a **landing page / marketing funnel with Admin CMS** that:
 
 - Showcases AI trainings, tools, products, and knowledge articles
 - Routes users to external platforms (YouTube, LinkedIn, Skool, etc.)

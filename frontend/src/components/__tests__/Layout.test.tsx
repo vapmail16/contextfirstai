@@ -20,7 +20,7 @@ describe('Layout Component', () => {
       );
 
       // Logo should be a link to home
-      const logoLink = screen.getByRole('link', { name: /AI Forge Hub/i });
+      const logoLink = screen.getByRole('link', { name: /Context First AI/i });
       expect(logoLink).toBeInTheDocument();
       expect(logoLink).toHaveAttribute('href', '/');
     });

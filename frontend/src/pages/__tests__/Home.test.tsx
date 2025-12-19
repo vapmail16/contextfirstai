@@ -59,7 +59,7 @@ describe('Home Page', () => {
 
       renderHome();
 
-      expect(screen.getByText(/AI Forge Hub/i)).toBeInTheDocument();
+      expect(screen.getByText(/Context First AI/i)).toBeInTheDocument();
     });
 
     it('should render hero section with description', () => {
@@ -71,7 +71,7 @@ describe('Home Page', () => {
       renderHome();
 
       // Should have some description text
-      const heroSection = screen.getByText(/AI Forge Hub/i).closest('section');
+      const heroSection = screen.getByText(/Context First AI/i).closest('section');
       expect(heroSection).toBeInTheDocument();
     });
   });
@@ -181,7 +181,7 @@ describe('Home Page', () => {
 
       // Should still render the page even if API fails
       await waitFor(() => {
-        expect(screen.getByText(/AI Forge Hub/i)).toBeInTheDocument();
+        expect(screen.getByText(/Context First AI/i)).toBeInTheDocument();
       });
     });
   });
