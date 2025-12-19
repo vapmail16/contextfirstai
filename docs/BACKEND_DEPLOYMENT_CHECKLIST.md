@@ -73,11 +73,13 @@ JWT_REFRESH_SECRET="your-production-jwt-refresh-secret-minimum-32-characters-lon
 # Node Environment
 NODE_ENV=production
 
-# Frontend URL (for CORS - update after frontend deployment)
-FRONTEND_URL="https://your-frontend-url.dcdeploy.cloud"
+# Frontend URL (for CORS - CRITICAL: Must match deployed frontend URL)
+# Issue #4: If not set correctly, frontend requests will be blocked by CORS
+FRONTEND_URL="https://frontend-whbqewat8i.dcdeploy.cloud"
 
-# CORS Configuration (Issue #9 - optional, defaults to FRONTEND_URL)
-ALLOWED_ORIGINS="https://your-frontend-url.dcdeploy.cloud,http://localhost:8080"
+# CORS Configuration (Issue #9, #4 - CRITICAL: Must include deployed frontend URL)
+# Comma-separated list of allowed origins
+ALLOWED_ORIGINS="https://frontend-whbqewat8i.dcdeploy.cloud,http://localhost:8080"
 
 # Email Service (Resend)
 RESEND_API_KEY="re_MpYK9CHH_AZCSz2PSUFiHfx3rXThM7EVM"
@@ -96,9 +98,10 @@ RESEND_API_KEY="re_MpYK9CHH_AZCSz2PSUFiHfx3rXThM7EVM"
 ### Important Notes
 
 1. **JWT Secrets**: Must be at least 32 characters long (enforced by config validation)
-2. **ALLOWED_ORIGINS**: Set this BEFORE deploying frontend to avoid CORS issues
+2. **ALLOWED_ORIGINS** (Issue #4): **CRITICAL** - Must include deployed frontend URL or CORS will block requests
 3. **DATABASE_URL**: Already configured from Step 2
-4. **FRONTEND_URL**: Update after frontend is deployed
+4. **FRONTEND_URL** (Issue #4): **CRITICAL** - Must match deployed frontend URL exactly
+5. **After updating CORS variables**: **Restart backend service** in DCDeploy for changes to take effect
 
 ---
 

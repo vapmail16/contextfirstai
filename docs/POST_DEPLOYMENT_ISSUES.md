@@ -427,6 +427,137 @@ RUN npm run build  # Now uses VITE_API_URL from build argument
 
 ---
 
+## Issue #4: CORS Error - Backend Not Allowing Frontend Origin
+
+**Date**: December 19, 2025  
+**Category**: Backend / CORS / Configuration  
+**Severity**: Critical  
+**Status**: ⚠️ Requires DCDeploy Configuration Update
+
+### Description
+After fixing the localhost issue (Issue #3), the frontend is now correctly calling the deployed backend URL (`https://backend-whbqewat8i.dcdeploy.cloud`), but requests are being blocked by CORS policy. The error shows: "Access to XMLHttpRequest at 'https://backend-whbqewat8i.dcdeploy.cloud/api/auth/register' from origin 'https://frontend-whbqewat8i.dcdeploy.cloud' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+
+### What Went Wrong
+
+**Problem**:
+- Frontend is correctly configured and calling deployed backend
+- Backend CORS configuration exists and is correct in code
+- Backend environment variables in DCDeploy don't include the frontend URL
+- `ALLOWED_ORIGINS` or `FRONTEND_URL` not set to deployed frontend URL
+- Backend is rejecting requests from `https://frontend-whbqewat8i.dcdeploy.cloud`
+
+**What Was Missing**:
+- `FRONTEND_URL` environment variable not set in DCDeploy backend
+- `ALLOWED_ORIGINS` environment variable not set in DCDeploy backend
+- Backend doesn't know which origins to allow
+
+**Current State** (Before Fix):
+```env
+# Backend .env in DCDeploy (missing frontend URL)
+DATABASE_URL=...
+JWT_SECRET=...
+# FRONTEND_URL not set or set to localhost
+# ALLOWED_ORIGINS not set
+```
+
+**Root Cause**:
+The backend CORS configuration reads from `config.allowedOrigins`, which is derived from `ALLOWED_ORIGINS` environment variable (or falls back to `FRONTEND_URL`). If neither is set to the deployed frontend URL, the backend will reject CORS requests from the frontend.
+
+### Solution Required
+
+**1. Update Backend Environment Variables in DCDeploy**:
+
+Go to backend service settings in DCDeploy and add/update:
+
+```env
+# Frontend URL (required)
+FRONTEND_URL=https://frontend-whbqewat8i.dcdeploy.cloud
+
+# Allowed Origins for CORS (comma-separated, includes frontend URL)
+ALLOWED_ORIGINS=https://frontend-whbqewat8i.dcdeploy.cloud,http://localhost:8080
+```
+
+**2. Restart Backend Service**:
+- After updating environment variables, restart the backend service in DCDeploy
+- This ensures the new CORS configuration is loaded
+
+**3. Verify CORS Configuration**:
+The backend code already supports this:
+```typescript
+// backend/src/config/index.ts
+allowedOrigins: process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [process.env.FRONTEND_URL || 'http://localhost:3000'],
+```
+
+### Prevention Strategies
+
+1. ✅ **Set CORS Variables During Deployment**:
+   - Always set `FRONTEND_URL` and `ALLOWED_ORIGINS` when deploying backend
+   - Include both localhost (for development) and deployed frontend URL
+   - Document required CORS environment variables in deployment checklist
+
+2. ✅ **Update Deployment Documentation**:
+   - Add CORS configuration to backend deployment checklist
+   - Include frontend URL in backend environment variables section
+   - Document that backend must be restarted after updating env vars
+
+3. ✅ **Test CORS After Deployment**:
+   - Verify CORS headers in browser console
+   - Test preflight requests (OPTIONS)
+   - Check that `Access-Control-Allow-Origin` header is present
+
+4. ✅ **Environment Variable Validation**:
+   - Consider adding validation for `FRONTEND_URL` in production
+   - Warn if `FRONTEND_URL` is still set to localhost in production
+
+### Related Files
+- `backend/src/config/index.ts` - CORS configuration (already correct)
+- `backend/src/middleware/security.ts` - CORS middleware (already correct)
+- `docs/BACKEND_DEPLOYMENT_CHECKLIST.md` - Backend deployment checklist (needs update)
+- `docs/DEPLOYMENT.md` - Deployment guide (needs update)
+- `docs/POST_DEPLOYMENT_ISSUES.md` - This file
+
+### DCDeploy Configuration Required
+
+**Backend Environment Variables** (Update in DCDeploy):
+```env
+# Existing variables...
+DATABASE_URL=postgresql://...
+JWT_SECRET=...
+JWT_REFRESH_SECRET=...
+NODE_ENV=production
+
+# ADD/UPDATE THESE:
+FRONTEND_URL=https://frontend-whbqewat8i.dcdeploy.cloud
+ALLOWED_ORIGINS=https://frontend-whbqewat8i.dcdeploy.cloud,http://localhost:8080
+```
+
+**After Updating**:
+1. Save environment variables in DCDeploy
+2. Restart backend service
+3. Test frontend registration/login
+
+### Time Lost
+- **User confusion**: Registration/login not working
+- **Debugging**: ~10 minutes to identify CORS issue
+- **Fixing issue**: ~5 minutes (update env vars + restart)
+- **Total wasted time**: ~15 minutes + user frustration
+
+### Recurrence Risk
+- **Before**: High (common to forget CORS configuration)
+- **After**: Low (will always set CORS variables during deployment)
+
+### Key Learnings
+
+1. **CORS must be configured for deployed frontend** - Backend needs to know frontend URL
+2. **Environment variables must be set** - Code is correct, but env vars must be configured
+3. **Restart required** - Backend must be restarted after updating env vars
+4. **Test after deployment** - Always test CORS after deploying both frontend and backend
+5. **Documentation** - Include CORS configuration in deployment checklists
+
+---
+
 **Last Updated**: December 19, 2025  
 **Maintained By**: Development Team
 

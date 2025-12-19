@@ -633,17 +633,24 @@ Before deploying the frontend, ensure:
    - Wait for deployment to complete
    - Note the frontend URL (e.g., `https://frontend-xxxxx.dcdeploy.cloud`)
 
-### 6.3 Update Backend CORS
+### 6.3 Update Backend CORS (CRITICAL - Issue #4)
 
-After frontend deployment, update backend CORS to allow frontend origin:
+**⚠️ IMPORTANT**: After frontend deployment, you MUST update backend CORS configuration or frontend requests will be blocked.
+
+Go to backend service settings in DCDeploy and update environment variables:
 
 **Backend Environment Variables** (update in DCDeploy):
 ```env
-FRONTEND_URL=https://your-frontend-url.dcdeploy.cloud
-ALLOWED_ORIGINS=https://your-frontend-url.dcdeploy.cloud,http://localhost:8080
+# CRITICAL: Replace with your actual frontend URL from DCDeploy
+FRONTEND_URL=https://frontend-whbqewat8i.dcdeploy.cloud
+ALLOWED_ORIGINS=https://frontend-whbqewat8i.dcdeploy.cloud,http://localhost:8080
 ```
 
-**Then redeploy backend** to apply CORS changes.
+**⚠️ CRITICAL STEPS**:
+1. Update `FRONTEND_URL` to your actual deployed frontend URL
+2. Update `ALLOWED_ORIGINS` to include your deployed frontend URL (comma-separated)
+3. **Restart backend service** in DCDeploy (not just redeploy - restart is required)
+4. Without restarting, CORS errors will persist (Issue #4)
 
 ### 6.4 Verify Frontend Deployment
 
