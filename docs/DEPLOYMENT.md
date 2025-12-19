@@ -260,42 +260,48 @@ cp .env .env.production
 
 ### 3.2 Update Production Environment Variables
 
+**IMPORTANT**: Only include essential variables. All other variables have defaults in `config/index.ts`.
+
 Edit `.env.production` with production values:
 
 ```env
-# Database
+# Essential Environment Variables Only
+# All other variables have defaults in config/index.ts
+
+# Database (from Step 2 - already migrated)
 DATABASE_URL="postgresql://yRNDQm:TEdbSyb49Q@database-whbqewat8i.tcp-proxy-2212.dcdeploy.cloud:30523/database-db"
+
+# JWT Authentication (must be 32+ characters, use strong production secrets)
+JWT_SECRET="your-production-jwt-secret-minimum-32-characters-long-here"
+JWT_REFRESH_SECRET="your-production-jwt-refresh-secret-minimum-32-characters-long-here"
 
 # Node Environment
 NODE_ENV=production
 
-# Server Configuration
-PORT=3001
-FRONTEND_URL="https://your-production-frontend-url.com"
+# Frontend URL (for CORS - update after frontend deployment)
+FRONTEND_URL="https://your-production-frontend-url.dcdeploy.cloud"
 
-# JWT Configuration
-JWT_SECRET="your-production-jwt-secret-key-here"
-JWT_REFRESH_SECRET="your-production-jwt-refresh-secret-key-here"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_EXPIRES_IN="7d"
-
-# Email Configuration (Resend)
+# Email Service (Resend)
 RESEND_API_KEY="re_MpYK9CHH_AZCSz2PSUFiHfx3rXThM7EVM"
-EMAIL_FROM="noreply@yourdomain.com"
-
-# File Upload
-UPLOAD_DIR="./uploads"
-MAX_FILE_SIZE=5242880
-
-# Logging
-LOG_LEVEL="info"
 ```
 
 **Important**:
-- Replace all placeholder values with actual production values
-- Use strong, unique secrets for production
-- Never commit `.env.production` to version control
-- Add `.env.production` to `.gitignore`
+- **Only include essential variables** - All other variables use defaults from `config/index.ts`
+- **Use actual values, not placeholders** - Populate with real production values
+- **Generate strong secrets** - JWT secrets must be 32+ characters
+- **Never commit `.env.production`** to version control
+- **Add `.env.production`** to `.gitignore`
+
+**Variables with Defaults** (don't need to be in .env unless overriding):
+- `PORT` (default: 3001)
+- `JWT_EXPIRES_IN` (default: 7d)
+- `JWT_REFRESH_EXPIRES_IN` (default: 30d)
+- `COOKIE_DOMAIN` (default: localhost)
+- `COOKIE_SECURE` (default: false)
+- `RATE_LIMIT_*` (all have defaults)
+- `LOG_LEVEL` (default: info)
+- `FROM_EMAIL` (default: noreply@yourdomain.com)
+- And many more - see `backend/src/config/index.ts` for all defaults
 
 ### 3.3 Restore Local .env
 

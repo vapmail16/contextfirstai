@@ -55,41 +55,43 @@
 
 ## Environment Variables Required in DCDeploy
 
-### Required Variables
+### Required Variables (Essential Only)
+
+**IMPORTANT**: Only include essential variables. All other variables have defaults in `config/index.ts`.
 
 ```env
-# Database (from Step 1 & 2)
+# Essential Environment Variables Only
+# All other variables have defaults in config/index.ts
+
+# Database (from Step 2 - already migrated)
 DATABASE_URL="postgresql://yRNDQm:TEdbSyb49Q@database-whbqewat8i.tcp-proxy-2212.dcdeploy.cloud:30523/database-db"
+
+# JWT Authentication (MUST be 32+ characters, use strong production secrets)
+JWT_SECRET="your-production-jwt-secret-minimum-32-characters-long"
+JWT_REFRESH_SECRET="your-production-jwt-refresh-secret-minimum-32-characters-long"
 
 # Node Environment
 NODE_ENV=production
 
-# Server Configuration
-PORT=3001
-
-# Frontend URL (will be set after frontend deployment)
+# Frontend URL (for CORS - update after frontend deployment)
 FRONTEND_URL="https://your-frontend-url.dcdeploy.cloud"
 
-# CORS Configuration (Issue #9)
+# CORS Configuration (Issue #9 - optional, defaults to FRONTEND_URL)
 ALLOWED_ORIGINS="https://your-frontend-url.dcdeploy.cloud,http://localhost:8080"
 
-# JWT Configuration (MUST be strong, 32+ characters)
-JWT_SECRET="your-production-jwt-secret-minimum-32-characters-long"
-JWT_REFRESH_SECRET="your-production-jwt-refresh-secret-minimum-32-characters-long"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_EXPIRES_IN="7d"
-
-# Email Configuration (Resend)
+# Email Service (Resend)
 RESEND_API_KEY="re_MpYK9CHH_AZCSz2PSUFiHfx3rXThM7EVM"
-FROM_EMAIL="noreply@yourdomain.com"
-
-# File Upload
-UPLOAD_DIR="./uploads"
-MAX_FILE_SIZE=5242880
-
-# Logging
-LOG_LEVEL="info"
 ```
+
+**Variables with Defaults** (don't need to be set unless overriding):
+- `PORT` (default: 3001)
+- `JWT_EXPIRES_IN` (default: 7d)
+- `JWT_REFRESH_EXPIRES_IN` (default: 30d)
+- `LOG_LEVEL` (default: info)
+- `FROM_EMAIL` (default: noreply@yourdomain.com)
+- `UPLOAD_DIR` (default: ./uploads)
+- `MAX_FILE_SIZE` (default: 5242880)
+- And many more - see `backend/src/config/index.ts` for all defaults
 
 ### Important Notes
 
