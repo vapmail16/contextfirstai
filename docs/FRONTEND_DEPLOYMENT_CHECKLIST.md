@@ -26,6 +26,8 @@
 - **Dockerfile Path**: `frontend/Dockerfile`
 - **Port**: `3001`
 
+**Note**: Dockerfile uses `node:20-alpine` to match package requirements (Vite 7.3.0, Vitest 4.0.16 require Node 20+)
+
 ### Environment Variables (Set in DCDeploy Dashboard)
 
 **IMPORTANT**: Only include essential variables. Vite requires `VITE_` prefix.

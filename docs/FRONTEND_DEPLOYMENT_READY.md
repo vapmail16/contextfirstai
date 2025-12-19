@@ -14,7 +14,8 @@ The frontend has been prepared for deployment to DCDeploy, following the same su
 ## Files Created
 
 ### 1. Dockerfile (`frontend/Dockerfile`)
-- **Multi-stage build**: Node 18 Alpine builder + nginx Alpine production
+- **Multi-stage build**: Node 20 Alpine builder + nginx Alpine production
+- **Node version**: Uses Node 20 to match package requirements (Vite 7.3.0, Vitest 4.0.16 require Node 20+)
 - **Optimized caching**: Package files copied first for better layer caching
 - **Memory optimization**: Increased Node memory limit for large builds
 - **Production-ready**: Minimal nginx image for serving static files
@@ -84,6 +85,7 @@ VITE_API_URL=https://backend-whbqewat8i.dcdeploy.cloud/api
 
 ### From Previous Projects
 - ✅ **Multi-stage build**: Optimized for size and caching
+- ✅ **Node version compatibility**: Uses Node 20 to match package requirements (Issue #6)
 - ✅ **SPA routing**: nginx configured for client-side routing
 - ✅ **Static assets**: Proper caching and MIME types
 - ✅ **Security headers**: Added security headers in nginx

@@ -12,6 +12,107 @@ This document logs all deployment issues encountered during the deployment of AI
 
 ---
 
+## Issue #6: Frontend Dockerfile Using Node 18 - Dependencies Require Node 20+
+
+**Date**: December 19, 2025  
+**Category**: Frontend Deployment / Build Configuration  
+**Severity**: Medium  
+**Status**: ✅ Resolved
+
+### Description
+The frontend Dockerfile was using `node:18-alpine`, but the project dependencies (Vite 7.3.0, Vitest 4.0.16, and several other packages) require Node.js 20 or higher. While the build succeeded with warnings, this could cause runtime issues and compatibility problems.
+
+### What Went Wrong
+
+**Problem**:
+- Dockerfile used `node:18-alpine` as base image
+- Package.json dependencies require Node 20+:
+  - `vite@7.3.0` requires `node: '^20.19.0 || >=22.12.0'`
+  - `vitest@4.0.16` requires `node: '^20.0.0 || ^22.0.0 || >=24.0.0'`
+  - `jsdom@27.3.0` requires `node: '^20.19.0 || ^22.12.0 || >=24.0.0'`
+  - And several other packages
+- Build succeeded but with multiple `EBADENGINE` warnings
+- Potential runtime compatibility issues
+
+**Error Messages** (from build log):
+```
+npm warn EBADENGINE Unsupported engine {
+  package: 'vite@7.3.0',
+  required: { node: '^20.19.0 || >=22.12.0' },
+  current: { node: 'v18.20.8', npm: '10.8.2' }
+}
+```
+
+**What Should Happen**:
+- Dockerfile should use Node version that matches package requirements
+- No engine warnings during build
+- Ensure runtime compatibility
+
+### Root Causes
+
+1. **Assumed Node 18 Compatibility**: Used Node 18 based on backend Dockerfile without checking frontend requirements
+2. **Didn't Check Package Requirements**: Didn't verify Node version requirements in package.json dependencies
+3. **Warnings Ignored**: Build succeeded with warnings, but warnings indicated potential issues
+
+### Solution Implemented
+
+**1. Updated Dockerfile to Use Node 20**:
+```dockerfile
+# Changed from node:18-alpine to node:20-alpine
+FROM node:20-alpine AS builder
+```
+
+**2. Verified Package Compatibility**:
+- Node 20 satisfies all package requirements
+- Vite 7.3.0: requires `^20.19.0 || >=22.12.0` ✅
+- Vitest 4.0.16: requires `^20.0.0 || ^22.0.0 || >=24.0.0` ✅
+- All other packages: require Node 20+ ✅
+
+### Prevention Strategies
+
+1. ✅ **Check Package Requirements Before Creating Dockerfile**:
+   - Review `package.json` for Node version requirements
+   - Check `engines` field in package.json (if present)
+   - Verify major dependency requirements (Vite, Vitest, etc.)
+
+2. ✅ **Match Node Version to Requirements**:
+   - Use Node version that satisfies all dependencies
+   - Prefer LTS versions (Node 20 LTS)
+   - Don't assume backend and frontend use same Node version
+
+3. ✅ **Don't Ignore Engine Warnings**:
+   - Treat `EBADENGINE` warnings as potential issues
+   - Fix version mismatches before deployment
+   - Verify compatibility even if build succeeds
+
+4. ✅ **Test Build Locally**:
+   - Test Docker build with correct Node version
+   - Verify no engine warnings
+   - Ensure runtime compatibility
+
+### Related Files
+- `frontend/Dockerfile` - Updated to use `node:20-alpine`
+- `frontend/package.json` - Contains dependency requirements
+- `docs/DEPLOYMENT_ISSUE_LOG.md` - This file
+
+### Time Lost
+- **Build warnings**: Potential runtime issues
+- **Fixing Dockerfile**: ~2 minutes
+- **Total wasted time**: ~2 minutes + potential runtime issues
+
+### Recurrence Risk
+- **Before**: Medium (common to assume Node 18 for all projects)
+- **After**: Low (will check package requirements before setting Node version)
+
+### Key Learnings
+
+1. **Check package requirements** - Don't assume Node version compatibility
+2. **Match Node version to dependencies** - Use version that satisfies all requirements
+3. **Don't ignore engine warnings** - They indicate potential compatibility issues
+4. **Frontend and backend may differ** - They can use different Node versions
+
+---
+
 ## Issue #5: JWT Secrets Not Updated - Using Weak/Placeholder Values
 
 **Date**: December 19, 2025  
