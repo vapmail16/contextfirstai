@@ -558,6 +558,139 @@ ALLOWED_ORIGINS=https://frontend-whbqewat8i.dcdeploy.cloud,http://localhost:8080
 
 ---
 
+## Issue #5: Infinite Token Refresh Loop - 401 Errors on Refresh Endpoint
+
+**Date**: December 19, 2025  
+**Category**: Frontend / Authentication / Token Refresh  
+**Severity**: Critical  
+**Status**: ✅ Resolved
+
+### Description
+After successful registration, when attempting to login or when the page loads with a stale token, the frontend enters an infinite loop of token refresh attempts. The console shows hundreds of `401 (Unauthorized)` errors for `POST /api/auth/refresh`, and the login form shows `429 (Too Many Requests)` due to rate limiting from the excessive refresh attempts.
+
+### What Went Wrong
+
+**Problem**:
+- User successfully registers
+- When page loads or login is attempted, frontend tries to get current user
+- If there's a stale/invalid access token, `getCurrentUser` fails with 401
+- Axios interceptor catches 401 and tries to refresh token
+- Refresh endpoint also returns 401 (no valid refresh token cookie)
+- Interceptor doesn't prevent refresh endpoint from triggering itself
+- This creates an infinite loop of refresh attempts
+- Rate limiter kicks in, returning 429 errors
+
+**What Was Missing**:
+- No check to prevent refresh endpoint from triggering the interceptor
+- No proper handling of refresh failure to stop the loop
+- Query might be refetching automatically, triggering more attempts
+
+**Current State** (Before Fix):
+```typescript
+// Interceptor tries to refresh on any 401
+if (error.response?.status === 401 && !originalRequest._retry) {
+  // Tries to refresh, but refresh endpoint itself can return 401
+  // This creates infinite loop
+  const { accessToken: newToken } = await refreshMutation.mutateAsync();
+}
+```
+
+**Root Cause**:
+The axios interceptor was set up to automatically refresh tokens on 401 errors, but it didn't exclude the refresh endpoint itself. When the refresh endpoint returned 401 (no valid refresh token cookie), the interceptor would try to refresh again, creating an infinite loop.
+
+### Solution Implemented
+
+**1. Prevent Refresh Endpoint from Triggering Interceptor** (`frontend/src/contexts/AuthContext.tsx`):
+```typescript
+// Prevent infinite loop: don't retry refresh endpoint itself
+if (originalRequest.url?.includes('/auth/refresh')) {
+  // If refresh fails, clear tokens and reject immediately
+  setAccessToken(null);
+  localStorage.removeItem('accessToken');
+  queryClient.setQueryData(['auth', 'me'], null);
+  return Promise.reject(error);
+}
+```
+
+**2. Improved Error Handling in getCurrentUser Query**:
+```typescript
+const { data: user, isLoading: isLoadingUser } = useQuery({
+  queryKey: ['auth', 'me'],
+  queryFn: authService.getCurrentUser,
+  enabled: !!accessToken,
+  retry: false,
+  refetchOnWindowFocus: false, // Prevent automatic refetch on window focus
+  refetchOnMount: false, // Prevent refetch on mount if we have cached data
+  onError: (error: any) => {
+    if (error?.response?.status === 401) {
+      setAccessToken(null);
+      localStorage.removeItem('accessToken');
+      queryClient.setQueryData(['auth', 'me'], null);
+    }
+  },
+});
+```
+
+**3. Added Dependencies to useEffect**:
+```typescript
+useEffect(() => {
+  // ... interceptor setup
+}, [refreshMutation, queryClient]); // Added dependencies
+```
+
+### Prevention Strategies
+
+1. ✅ **Exclude Refresh Endpoint from Interceptor**:
+   - Always check if the failed request is the refresh endpoint itself
+   - If refresh fails, clear tokens immediately and stop retrying
+   - Don't let refresh endpoint trigger the interceptor
+
+2. ✅ **Prevent Automatic Refetches**:
+   - Set `refetchOnWindowFocus: false` for auth queries
+   - Set `refetchOnMount: false` to prevent unnecessary refetches
+   - Only refetch when explicitly needed
+
+3. ✅ **Proper Error Handling**:
+   - Clear tokens immediately when refresh fails
+   - Clear query cache to prevent stale data
+   - Don't retry failed refresh attempts
+
+4. ✅ **Rate Limiting Awareness**:
+   - Be aware that excessive requests will trigger rate limiting (429)
+   - Implement proper backoff or stop retrying after failure
+   - Clear tokens to prevent further attempts
+
+5. ✅ **Testing**:
+   - Test with invalid/stale tokens
+   - Test refresh endpoint failure scenarios
+   - Verify no infinite loops occur
+
+### Related Files
+- `frontend/src/contexts/AuthContext.tsx` - Auth context with interceptor (updated)
+- `frontend/src/services/api/authService.ts` - Auth service (no changes needed)
+- `docs/POST_DEPLOYMENT_ISSUES.md` - This file
+
+### Time Lost
+- **User confusion**: Login/registration not working
+- **Debugging**: ~15 minutes to identify infinite loop
+- **Fixing issue**: ~10 minutes (interceptor fix + query config)
+- **Rate limiting**: Additional delay due to 429 errors
+- **Total wasted time**: ~25 minutes + user frustration
+
+### Recurrence Risk
+- **Before**: High (common issue with token refresh interceptors)
+- **After**: Low (refresh endpoint excluded, proper error handling)
+
+### Key Learnings
+
+1. **Exclude refresh endpoint from interceptor** - Don't let refresh trigger itself
+2. **Clear tokens immediately on refresh failure** - Stop the loop at the source
+3. **Prevent automatic refetches** - Don't trigger unnecessary requests
+4. **Handle 401 errors properly** - Clear state and stop retrying
+5. **Test edge cases** - Stale tokens, missing refresh tokens, etc.
+
+---
+
 **Last Updated**: December 19, 2025  
 **Maintained By**: Development Team
 

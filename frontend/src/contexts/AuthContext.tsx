@@ -43,10 +43,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     queryFn: authService.getCurrentUser,
     enabled: !!accessToken,
     retry: false,
-    onError: () => {
-      // If getCurrentUser fails, clear token
-      setAccessToken(null);
-      localStorage.removeItem('accessToken');
+    refetchOnWindowFocus: false, // Prevent automatic refetch on window focus
+    refetchOnMount: false, // Prevent refetch on mount if we have cached data
+    onError: (error: any) => {
+      // If getCurrentUser fails with 401, clear token (refresh will be attempted by interceptor)
+      // If refresh also fails, tokens will be cleared by interceptor
+      if (error?.response?.status === 401) {
+        setAccessToken(null);
+        localStorage.removeItem('accessToken');
+        queryClient.setQueryData(['auth', 'me'], null);
+      }
     },
   });
 
@@ -107,6 +113,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       async (error) => {
         const originalRequest = error.config;
 
+        // Prevent infinite loop: don't retry refresh endpoint itself
+        if (originalRequest.url?.includes('/auth/refresh')) {
+          // If refresh fails, clear tokens and reject
+          setAccessToken(null);
+          localStorage.removeItem('accessToken');
+          queryClient.setQueryData(['auth', 'me'], null);
+          return Promise.reject(error);
+        }
+
+        // Only retry if it's a 401 and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
@@ -115,8 +131,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return api(originalRequest);
           } catch (refreshError) {
+            // Refresh failed - clear everything and reject
             setAccessToken(null);
             localStorage.removeItem('accessToken');
+            queryClient.setQueryData(['auth', 'me'], null);
             return Promise.reject(refreshError);
           }
         }
@@ -130,7 +148,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         api.interceptors.response.eject(interceptor);
       }
     };
-  }, []);
+  }, [refreshMutation, queryClient]);
 
   // Set authorization header when token changes
   useEffect(() => {
