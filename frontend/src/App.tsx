@@ -24,6 +24,7 @@ import CommunityList from "./pages/admin/CommunityList";
 import CommunityForm from "./pages/admin/CommunityForm";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -62,6 +63,7 @@ function App() {
 
             {/* Auth routes without layout */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Admin routes (protected) */}
             <Route

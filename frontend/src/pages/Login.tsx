@@ -77,6 +77,13 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? 'Logging in...' : 'Login'}
             </Button>
+
+            <div className="text-center text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-primary hover:underline">
+                Register
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

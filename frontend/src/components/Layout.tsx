@@ -71,11 +71,18 @@ const Layout = ({ children }: LayoutProps) => {
                   </Button>
                 </>
               ) : (
-                <Link to="/login">
-                  <Button variant="default" size="sm">
-                    Login
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/register">
+                    <Button variant="outline" size="sm">
+                      Register
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="default" size="sm">
+                      Login
+                    </Button>
+                  </Link>
+                </>
               )}
             </div>
 

@@ -141,6 +141,163 @@ const Layout = ({ children }: LayoutProps) => {
 
 ---
 
+## Issue #2: Missing Register Feature in Frontend
+
+**Date**: December 19, 2025  
+**Category**: Frontend / Feature Missing  
+**Severity**: High  
+**Status**: ✅ Resolved
+
+### Description
+After adding the login button, it was discovered that the register/signup feature was completely missing from the frontend. While the backend API supports registration (`POST /api/auth/register`), and the `AuthContext` has register functionality, there was no UI component or route for users to register.
+
+### What Went Wrong
+
+**Problem**:
+- Backend register endpoint exists and is functional (`POST /api/auth/register`)
+- `AuthContext` has `register` function implemented
+- `authService` has `register` method
+- No Register page component exists
+- No `/register` route in `App.tsx`
+- No register button or link in the UI
+- Users cannot create new accounts
+
+**What Was Missing**:
+- Register page component (`Register.tsx`)
+- `/register` route in routing configuration
+- Register button in navigation or login page
+- Link from login page to register page
+- Tests for Register component
+
+**Current State** (Before Fix):
+```tsx
+// App.tsx - Only login route exists
+<Route path="/login" element={<Login />} />
+// NO /register route
+
+// Layout.tsx - Only login button
+{!isAuthenticated && (
+  <Link to="/login">
+    <Button>Login</Button>
+  </Link>
+)}
+// NO Register button
+
+// Login.tsx - No link to register
+// NO "Don't have an account? Register" link
+```
+
+### Root Causes
+
+1. **Incomplete Auth Flow**: Only login was implemented, registration was overlooked
+2. **Backend-First Development**: Backend API was complete, but frontend UI was not implemented
+3. **Missing Route**: Register route was never added to routing configuration
+4. **No Navigation**: No way for users to discover or access registration
+5. **Incomplete Testing**: No tests for register functionality in frontend
+
+### Solution Implemented
+
+**1. Created Register Page Component** (`frontend/src/pages/Register.tsx`):
+```tsx
+- Form with name, email, password fields
+- Validation and error handling
+- Success message and redirect to login
+- Link to login page
+- Follows same pattern as Login page
+```
+
+**2. Added Register Route** (`frontend/src/App.tsx`):
+```tsx
+<Route path="/register" element={<Register />} />
+```
+
+**3. Added Register Button to Layout** (`frontend/src/components/Layout.tsx`):
+```tsx
+{!isAuthenticated && (
+  <>
+    <Link to="/register">
+      <Button variant="outline" size="sm">Register</Button>
+    </Link>
+    <Link to="/login">
+      <Button variant="default" size="sm">Login</Button>
+    </Link>
+  </>
+)}
+```
+
+**4. Added Register Link to Login Page** (`frontend/src/pages/Login.tsx`):
+```tsx
+<div className="text-center text-sm text-muted-foreground">
+  Don't have an account?{' '}
+  <Link to="/register" className="text-primary hover:underline">
+    Register
+  </Link>
+</div>
+```
+
+**5. Created Tests** (`frontend/src/pages/__tests__/Register.test.tsx`):
+- Tests for form rendering
+- Tests for form submission
+- Tests for error handling
+- Tests for login link
+- All tests passing ✅
+
+### Prevention Strategies
+
+1. ✅ **Complete Auth Flow**:
+   - Always implement both login AND register when building auth
+   - Don't assume users will only login (new users need registration)
+   - Include both in initial wireframes/designs
+
+2. ✅ **Frontend-Backend Parity**:
+   - When backend API exists, ensure frontend UI exists
+   - Don't leave backend endpoints without frontend access
+   - Verify all API endpoints have corresponding UI
+
+3. ✅ **Route Completeness**:
+   - When adding auth, add ALL auth routes (login, register, logout)
+   - Include navigation links for all auth actions
+   - Make registration discoverable
+
+4. ✅ **Cross-Page Links**:
+   - Login page should link to register
+   - Register page should link to login
+   - Make auth flow bidirectional
+
+5. ✅ **TDD Approach**:
+   - Write tests for register functionality first
+   - Ensure tests cover all scenarios
+   - Verify tests pass before considering feature complete
+
+### Related Files
+- `frontend/src/pages/Register.tsx` - Register page component (created)
+- `frontend/src/pages/__tests__/Register.test.tsx` - Register tests (created)
+- `frontend/src/App.tsx` - Routing configuration (updated with /register route)
+- `frontend/src/components/Layout.tsx` - Layout component (updated with register button)
+- `frontend/src/pages/Login.tsx` - Login page (updated with register link)
+- `frontend/src/contexts/AuthContext.tsx` - Auth context (register function already existed)
+- `frontend/src/services/api/authService.ts` - Auth service (register method already existed)
+- `docs/POST_DEPLOYMENT_ISSUES.md` - This file
+
+### Time Lost
+- **User confusion**: Users cannot create accounts
+- **Support requests**: Users asking how to register
+- **Fixing issue**: ~20 minutes (component, route, tests, links)
+- **Total wasted time**: ~20 minutes + user frustration
+
+### Recurrence Risk
+- **Before**: High (common to implement login but forget register)
+- **After**: Low (will always implement complete auth flow)
+
+### Key Learnings
+
+1. **Complete auth flow is essential** - Always implement both login and register
+2. **Frontend-Backend parity** - Don't leave backend endpoints without UI
+3. **Make features discoverable** - Add navigation links and cross-page references
+4. **TDD ensures completeness** - Writing tests first helps catch missing features
+
+---
+
 **Last Updated**: December 19, 2025  
 **Maintained By**: Development Team
 
