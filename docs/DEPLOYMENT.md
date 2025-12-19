@@ -531,7 +531,137 @@ if (!process.env.REMOTE_DATABASE_URL && process.env.NODE_ENV === 'test') {
 
 ---
 
-## Step 5: Verify Migration Completeness
+## Step 5: Backend Deployment
+
+### 5.1 Prerequisites
+
+Before deploying the backend, ensure:
+- ✅ Database migration completed (Step 2)
+- ✅ Environment variables configured (Step 3)
+- ✅ All tests passing locally
+- ✅ Dockerfile and .dockerignore created
+- ✅ Code pushed to GitHub repository
+
+### 5.2 Deploy Backend to DCDeploy
+
+1. **Connect Repository**:
+   - Repository: `https://github.com/vapmail16/contextfirstai.git`
+   - Build Context: `backend/`
+   - Dockerfile Path: `backend/Dockerfile`
+
+2. **Configure Service**:
+   - Service Name: `contextfirstai-backend`
+   - Port: `3001`
+
+3. **Set Environment Variables** (see `docs/BACKEND_DEPLOYMENT_CHECKLIST.md` for full list):
+   ```env
+   DATABASE_URL="postgresql://yRNDQm:TEdbSyb49Q@database-whbqewat8i.tcp-proxy-2212.dcdeploy.cloud:30523/database-db"
+   JWT_SECRET="<64-character-secure-hex-string>"
+   JWT_REFRESH_SECRET="<64-character-secure-hex-string>"
+   NODE_ENV=production
+   FRONTEND_URL="https://your-frontend-url.dcdeploy.cloud"
+   RESEND_API_KEY="re_MpYK9CHH_AZCSz2PSUFiHfx3rXThM7EVM"
+   ALLOWED_ORIGINS="https://your-frontend-url.dcdeploy.cloud,http://localhost:8080"
+   ```
+
+4. **Deploy**:
+   - Click "Deploy" and monitor build logs
+   - Wait for deployment to complete
+   - Note the backend URL (e.g., `https://backend-xxxxx.dcdeploy.cloud`)
+
+### 5.3 Verify Backend Deployment
+
+```bash
+# Health check
+curl https://your-backend-url.dcdeploy.cloud/api/health
+
+# Expected response:
+# {"status":"ok","database":"connected"}
+```
+
+### 5.4 Backend Deployment Checklist
+
+See `docs/BACKEND_DEPLOYMENT_CHECKLIST.md` for detailed checklist and troubleshooting.
+
+**Status**: ✅ Backend deployed successfully in 1-go (December 19, 2025)
+
+---
+
+## Step 6: Frontend Deployment
+
+### 6.1 Prerequisites
+
+Before deploying the frontend, ensure:
+- ✅ Backend deployed and accessible (Step 5)
+- ✅ Backend URL available (e.g., `https://backend-xxxxx.dcdeploy.cloud`)
+- ✅ Dockerfile and nginx.conf created
+- ✅ Code pushed to GitHub repository
+
+### 6.2 Deploy Frontend to DCDeploy
+
+1. **Connect Repository**:
+   - Repository: `https://github.com/vapmail16/contextfirstai.git`
+   - Build Context: `frontend/`
+   - Dockerfile Path: `frontend/Dockerfile`
+
+2. **Configure Service**:
+   - Service Name: `contextfirstai-frontend`
+   - Port: `3001`
+
+3. **Set Environment Variables**:
+   ```env
+   # Backend API URL (REQUIRED - update with actual backend URL)
+   VITE_API_URL=https://your-backend-url.dcdeploy.cloud/api
+   ```
+
+   **Important**: 
+   - Vite requires `VITE_` prefix for environment variables
+   - These variables are embedded at **build time** (not runtime)
+   - After changing `VITE_API_URL`, you must **rebuild** the frontend
+
+4. **Deploy**:
+   - Click "Deploy" and monitor build logs
+   - Wait for deployment to complete
+   - Note the frontend URL (e.g., `https://frontend-xxxxx.dcdeploy.cloud`)
+
+### 6.3 Update Backend CORS
+
+After frontend deployment, update backend CORS to allow frontend origin:
+
+**Backend Environment Variables** (update in DCDeploy):
+```env
+FRONTEND_URL=https://your-frontend-url.dcdeploy.cloud
+ALLOWED_ORIGINS=https://your-frontend-url.dcdeploy.cloud,http://localhost:8080
+```
+
+**Then redeploy backend** to apply CORS changes.
+
+### 6.4 Verify Frontend Deployment
+
+1. **Health Check**:
+   ```bash
+   curl https://your-frontend-url.dcdeploy.cloud/nginx-health
+   # Expected: healthy
+   ```
+
+2. **Frontend Loads**:
+   - Visit: `https://your-frontend-url.dcdeploy.cloud`
+   - Should see the application
+   - No console errors
+   - API calls should work (if backend CORS is configured)
+
+3. **Check Browser Console**:
+   - No CORS errors
+   - API calls succeed
+   - No 404 errors for static assets
+
+### 6.5 Frontend Deployment Checklist
+
+See `docs/FRONTEND_DEPLOYMENT_CHECKLIST.md` for detailed checklist and troubleshooting.
+
+---
+
+## Step 7: Verify Migration Completeness
 
 ### 5.1 Compare Local and Remote Schemas
 
